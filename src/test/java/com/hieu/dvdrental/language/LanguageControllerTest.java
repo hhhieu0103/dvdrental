@@ -200,9 +200,9 @@ public class LanguageControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.title").value("Validation Failed"))
-                .andExpect(jsonPath("$.detail").value("One or more fields are invalid. Check the invalidFields for more details"))
+                .andExpect(jsonPath("$.detail").value("One or more fields are invalid. Check the properties for more details"))
                 .andExpect(jsonPath("$.instance").value("/languages"))
-                .andExpect(jsonPath("$.properties.invalidFields." + field).value(message));
+                .andExpect(jsonPath("$.properties." + field).value(message));
     }
 
     @Test
@@ -246,9 +246,9 @@ public class LanguageControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.title").value("Validation Failed"))
-                .andExpect(jsonPath("$.detail").value("One or more fields are invalid. Check the invalidFields for more details"))
+                .andExpect(jsonPath("$.detail").value("One or more fields are invalid. Check the properties for more details"))
                 .andExpect(jsonPath("$.instance").value("/languages/1"))
-                .andExpect(jsonPath("$.properties.invalidFields." + field).value(message));
+                .andExpect(jsonPath("$.properties." + field).value(message));
     }
 
     @Test
@@ -281,6 +281,19 @@ public class LanguageControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.title").value("Entity Not Found"))
                 .andExpect(jsonPath("$.detail").value("Language with id " + 1 + " not found"))
+                .andExpect(jsonPath("$.instance").value("/languages/1"));
+    }
+
+    @Test
+    public void shouldRejectWhenExistsFilmWithLanguageIdOnDelete() throws Exception {
+        willThrow(new IllegalArgumentException("One or more films are associated with the language with id 1"))
+                .given(languageService).deleteLanguage(1);
+
+        mockMvc.perform(delete("/languages/1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.detail").value("One or more films are associated with the language with id 1"))
                 .andExpect(jsonPath("$.instance").value("/languages/1"));
     }
 }

@@ -151,6 +151,7 @@ public class LanguageServiceTest {
     @Test
     public void shouldDeleteLanguage() {
         when(languageRepository.existsById(1)).thenReturn(true);
+        when(filmRepository.existsFilmByLanguageId(1)).thenReturn(false);
 
         languageService.deleteLanguage(1);
 
@@ -164,5 +165,15 @@ public class LanguageServiceTest {
         assertThatThrownBy(() -> languageService.deleteLanguage(1))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Language with id " + 1 + " not found");
+    }
+
+    @Test
+    public void shouldRejectOnDeleteWhenExistsFilmWithLanguageId() {
+        when(languageRepository.existsById(1)).thenReturn(true);
+        when(filmRepository.existsFilmByLanguageId(1)).thenReturn(true);
+
+        assertThatThrownBy(() -> languageService.deleteLanguage(1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("One or more films are associated with the language with id 1");
     }
 }

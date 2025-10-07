@@ -12,7 +12,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.Instant;
 import java.util.List;
@@ -234,7 +234,7 @@ public class LanguageIntegrationTest {
     }
 
     @Test
-    @Transactional
+    @DirtiesContext
     public void shouldCreateNewLanguage() {
         LanguageDto languageDto = new LanguageDto(null, "Vietnamese", null);
         HttpHeaders headers = new HttpHeaders();
@@ -299,7 +299,7 @@ public class LanguageIntegrationTest {
     }
 
     @Test
-    @Transactional
+    @DirtiesContext
     public void shouldUpdateLanguage() {
         LanguageDto languageDto = new LanguageDto(4, "Chinese", null);
         HttpHeaders headers = new HttpHeaders();
@@ -336,7 +336,6 @@ public class LanguageIntegrationTest {
     }
 
     @Test
-    @Transactional
     public void shouldRejectDifferentIdsOnUpdate() {
         LanguageDto languageDto = new LanguageDto(1, "Vietnamese", null);
         HttpHeaders headers = new HttpHeaders();
@@ -354,7 +353,7 @@ public class LanguageIntegrationTest {
     }
 
     @Test
-    @Transactional
+    @DirtiesContext
     public void shouldRejectNotExistingIdOnUpdate() {
         LanguageDto languageDto = new LanguageDto(99, "Vietnamese", null);
         HttpHeaders headers = new HttpHeaders();
@@ -372,7 +371,7 @@ public class LanguageIntegrationTest {
     }
 
     @Test
-    @Transactional
+    @DirtiesContext
     public void shouldDeleteLanguage() {
         ResponseEntity<Void> response = restTemplate.exchange("/languages/2", HttpMethod.DELETE, null, Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
