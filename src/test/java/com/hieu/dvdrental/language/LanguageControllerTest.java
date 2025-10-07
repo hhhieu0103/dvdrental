@@ -6,7 +6,6 @@ import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -28,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = LanguageController.class)
 @Import(JacksonConfiguration.class)
-public class LanguageControllerTest {
+public class LanguageControllerTest implements LanguageTestSuit {
     @Autowired
     MockMvc mockMvc;
 
@@ -54,17 +52,9 @@ public class LanguageControllerTest {
     private final Page<LanguageDto> dtoPage = new PageImpl<>(languageDtoList, pageable, languageDtoList.size());
     private final Page<LanguageDto> dtoPageDefault = new PageImpl<>(languageDtoList, defaultPageable, languageDtoList.size());
 
-    private static Stream<Arguments> invalidStringProvider() {
-        return Stream.of(
-                Arguments.of("name", null, "Language name must not be blank"),
-                Arguments.of("name", "", "Language name must not be blank"),
-                Arguments.of("name", "   ", "Language name must not be blank"),
-                Arguments.of("name", "a".repeat(21), "Language name must has less than 20 characters")
-        );
-    }
-
     @Test
-    public void shouldReturnLanguagePageOnGetAll() throws Exception {
+    @Override
+    public void shouldReturnAPageOnGetAll() throws Exception {
         String expectedJson = objectMapper.writeValueAsString(Map.of("content", languageDtoList));
         given(languageService.getAllLanguages(pageable)).willReturn(dtoPage);
 
@@ -82,8 +72,9 @@ public class LanguageControllerTest {
         verify(languageService).getAllLanguages(pageable);
     }
 
+    @Override
     @Test
-    public void shouldReturnLanguagePageOnGetAllWithDefaultPagination() throws Exception {
+    public void shouldReturnAPageWithDefaultPaginationOnGetAll() throws Exception {
         String expectedJson = objectMapper.writeValueAsString(Map.of("content", languageDtoList));
         given(languageService.getAllLanguages(defaultPageable)).willReturn(dtoPageDefault);
 
@@ -98,8 +89,9 @@ public class LanguageControllerTest {
         verify(languageService).getAllLanguages(defaultPageable);
     }
 
+    @Override
     @Test
-    public void shouldReturnLanguagePageOnGetByName() throws Exception {
+    public void shouldReturnAPageOnGetByName() throws Exception {
         String expectedJson = objectMapper.writeValueAsString(Map.of("content", languageDtoList));
         given(languageService.getLanguagesByName("an", pageable)).willReturn(dtoPage);
 
@@ -118,8 +110,9 @@ public class LanguageControllerTest {
         verify(languageService).getLanguagesByName("an", pageable);
     }
 
+    @Override
     @Test
-    public void shouldReturnLanguagePageOnGetByNameWithDefaultPagination() throws Exception {
+    public void shouldReturnAPageWithDefaultPaginationOnGetByName() throws Exception {
         String expectedJson = objectMapper.writeValueAsString(Map.of("content", languageDtoList));
         given(languageService.getLanguagesByName("an", defaultPageable)).willReturn(dtoPageDefault);
 
@@ -134,6 +127,7 @@ public class LanguageControllerTest {
         verify(languageService).getLanguagesByName("an", defaultPageable);
     }
 
+    @Override
     @Test
     public void shouldReturnLanguageOnGetById() throws Exception {
         String expectedJson = objectMapper.writeValueAsString(languageDtoList.getFirst());
@@ -147,8 +141,9 @@ public class LanguageControllerTest {
         verify(languageService).getLanguageById(1);
     }
 
+    @Override
     @Test
-    public void shouldRejectWhenLanguageNotFound() throws Exception {
+    public void shouldRejectNonExistingLanguageOnGetById() throws Exception {
         given(languageService.getLanguageById(1)).willThrow(new EntityNotFoundException("Language with id " + 1 + " not found"));
 
         mockMvc.perform(get("/languages/1"))
@@ -161,8 +156,9 @@ public class LanguageControllerTest {
         verify(languageService).getLanguageById(1);
     }
 
+    @Override
     @Test
-    public void shouldCreateLanguage() throws Exception {
+    public void shouldCreateNewLanguage() throws Exception {
         given(languageService.addLanguage(any(LanguageDto.class))).willReturn(1);
 
         mockMvc.perform(post("/languages")
@@ -174,8 +170,9 @@ public class LanguageControllerTest {
         verify(languageService).addLanguage(any(LanguageDto.class));
     }
 
+    @Override
     @Test
-    public void shouldRejectWhenLanguageAlreadyExistsOnCreate() throws Exception {
+    public void shouldRejectLanguageWithExistingIdOnCreate() throws Exception {
         given(languageService.addLanguage(any(LanguageDto.class))).willThrow(new EntityExistsException("Language with id " + 1 + " already exists"));
 
         mockMvc.perform(post("/languages")
@@ -191,8 +188,9 @@ public class LanguageControllerTest {
     }
 
     @ParameterizedTest
-    @MethodSource("invalidStringProvider")
-    public void shouldRejectWhenValidationFailsOnCreate(String field, String fieldValue, String message) throws Exception {
+    @MethodSource("invalidNameProvider")
+    @Override
+    public void shouldRejectLanguageWithInvalidNameOnCreate(String field, String fieldValue, String message) throws Exception {
         LanguageDto languageDto = new LanguageDto(null, fieldValue, null);
         mockMvc.perform(post("/languages")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -206,6 +204,7 @@ public class LanguageControllerTest {
     }
 
     @Test
+    @Override
     public void shouldUpdateLanguage() throws Exception {
         LanguageDto dto =  new LanguageDto(null, "New name", null);
 
@@ -218,7 +217,8 @@ public class LanguageControllerTest {
     }
 
     @Test
-    public void shouldRejectWhenLanguageNotExistOnUpdate() throws Exception {
+    @Override
+    public void shouldRejectNonExistingIdOnUpdate() throws Exception {
         LanguageDto dto =  new LanguageDto(null, "New name", null);
         willThrow(new EntityNotFoundException("Language with id " + 1 + " not found"))
                 .given(languageService).updateLanguage(any(LanguageDto.class));
@@ -236,8 +236,9 @@ public class LanguageControllerTest {
     }
 
     @ParameterizedTest
-    @MethodSource("invalidStringProvider")
-    public void shouldRejectWhenValidationFailsOnUpdate(String field, String fieldValue, String message) throws Exception {
+    @MethodSource("invalidNameProvider")
+    @Override
+    public void shouldRejectLanguageWithInvalidNameOnUpdate(String field, String fieldValue, String message) throws Exception {
         LanguageDto dto =  new LanguageDto(null, fieldValue, null);
 
         mockMvc.perform(patch("/languages/1")
@@ -252,7 +253,8 @@ public class LanguageControllerTest {
     }
 
     @Test
-    public void shouldRejectWhenLanguageIdsNotMatchOnUpdate() throws Exception {
+    @Override
+    public void shouldRejectDifferentIdsOnUpdate() throws Exception {
         LanguageDto dto =  new LanguageDto(2, "New name", null);
 
         mockMvc.perform(patch("/languages/1")
@@ -266,13 +268,15 @@ public class LanguageControllerTest {
     }
 
     @Test
+    @Override
     public void shouldDeleteLanguage() throws Exception {
         mockMvc.perform(delete("/languages/1"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
-    public void shouldRejectWhenLanguageNotExistOnDelete() throws Exception {
+    @Override
+    public void shouldRejectNonExistingIdOnDelete() throws Exception {
         willThrow(new EntityNotFoundException("Language with id " + 1 + " not found"))
                 .given(languageService).deleteLanguage(1);
 
@@ -285,7 +289,8 @@ public class LanguageControllerTest {
     }
 
     @Test
-    public void shouldRejectWhenExistsFilmWithLanguageIdOnDelete() throws Exception {
+    @Override
+    public void shouldRejectLanguageWithExistingForeignKeyOnDelete() throws Exception {
         willThrow(new IllegalArgumentException("One or more films are associated with the language with id 1"))
                 .given(languageService).deleteLanguage(1);
 

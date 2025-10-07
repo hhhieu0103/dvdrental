@@ -4,7 +4,6 @@ import com.hieu.dvdrental.ResponsePageImpl;
 import com.hieu.dvdrental.config.TestContainersConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,19 +15,19 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(TestContainersConfig.class)
-public class LanguageIntegrationTest {
+public class LanguageIntegrationTest implements LanguageTestSuit {
 
     @Autowired
     private TestRestTemplate restTemplate;
 
     @Test
-    public void shouldReturnLanguagePageOnGetAll() {
+    @Override
+    public void shouldReturnAPageOnGetAll() {
         ResponseEntity<ResponsePageImpl<LanguageDto>> response = restTemplate.exchange(
                 "/languages?page=0&size=5&sort=name,asc",
                 HttpMethod.GET,
@@ -72,7 +71,8 @@ public class LanguageIntegrationTest {
     }
 
     @Test
-    public void shouldReturnLanguagePageWithDefaultPaginationOnGetAll() {
+    @Override
+    public void shouldReturnAPageWithDefaultPaginationOnGetAll() {
         ResponseEntity<ResponsePageImpl<LanguageDto>> response = restTemplate.exchange(
                 "/languages",
                 HttpMethod.GET,
@@ -120,7 +120,8 @@ public class LanguageIntegrationTest {
     }
 
     @Test
-    public void shouldReturnLanguagePageOnGetByName() {
+    @Override
+    public void shouldReturnAPageOnGetByName() {
         ResponseEntity<ResponsePageImpl<LanguageDto>> response = restTemplate.exchange(
                 "/languages?name=an&page=0&size=5&sort=name,asc",
                 HttpMethod.GET,
@@ -160,7 +161,8 @@ public class LanguageIntegrationTest {
     }
 
     @Test
-    public void shouldReturnLanguagePageWithDefaultPaginationOnGetByName() {
+    @Override
+    public void shouldReturnAPageWithDefaultPaginationOnGetByName() {
         ResponseEntity<ResponsePageImpl<LanguageDto>> response = restTemplate.exchange(
                 "/languages?name=an",
                 HttpMethod.GET,
@@ -200,6 +202,7 @@ public class LanguageIntegrationTest {
     }
 
     @Test
+    @Override
     public void shouldReturnLanguageOnGetById() {
         ResponseEntity<LanguageDto> response = restTemplate.exchange(
                 "/languages/1",
@@ -216,6 +219,7 @@ public class LanguageIntegrationTest {
     }
 
     @Test
+    @Override
     public void shouldRejectNonExistingLanguageOnGetById() {
         ResponseEntity<ProblemDetail> response = restTemplate.exchange(
                 "/languages/99",
@@ -234,6 +238,7 @@ public class LanguageIntegrationTest {
     }
 
     @Test
+    @Override
     @DirtiesContext
     public void shouldCreateNewLanguage() {
         LanguageDto languageDto = new LanguageDto(null, "Vietnamese", null);
@@ -254,18 +259,10 @@ public class LanguageIntegrationTest {
         assertThat(getResponse.getBody().getLastUpdate()).isNotNull();
     }
 
-    private static Stream<Arguments> invalidNameProvider() {
-        return Stream.of(
-                Arguments.of(null, "Language name must not be blank"),
-                Arguments.of("", "Language name must not be blank"),
-                Arguments.of("    ", "Language name must not be blank"),
-                Arguments.of("a".repeat(21), "Language name must has less than 20 characters")
-        );
-    }
-
     @ParameterizedTest
     @MethodSource("invalidNameProvider")
-    public void shouldRejectLanguageWithInvalidNameOnCreate(String invalidName, String message) {
+    @Override
+    public void shouldRejectLanguageWithInvalidNameOnCreate(String field, String invalidName, String message) {
         LanguageDto languageDto = new LanguageDto(null, invalidName, null);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -282,6 +279,7 @@ public class LanguageIntegrationTest {
     }
 
     @Test
+    @Override
     public void shouldRejectLanguageWithExistingIdOnCreate() {
         LanguageDto languageDto = new LanguageDto(1, "Vietnamese", null);
         HttpHeaders headers = new HttpHeaders();
@@ -300,6 +298,7 @@ public class LanguageIntegrationTest {
 
     @Test
     @DirtiesContext
+    @Override
     public void shouldUpdateLanguage() {
         LanguageDto languageDto = new LanguageDto(4, "Chinese", null);
         HttpHeaders headers = new HttpHeaders();
@@ -319,7 +318,8 @@ public class LanguageIntegrationTest {
 
     @ParameterizedTest
     @MethodSource("invalidNameProvider")
-    public void shouldRejectLanguageWithInvalidNameOnUpdate(String invalidName, String message) {
+    @Override
+    public void shouldRejectLanguageWithInvalidNameOnUpdate(String field, String invalidName, String message) {
         LanguageDto languageDto = new LanguageDto(null, invalidName, null);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -336,6 +336,7 @@ public class LanguageIntegrationTest {
     }
 
     @Test
+    @Override
     public void shouldRejectDifferentIdsOnUpdate() {
         LanguageDto languageDto = new LanguageDto(1, "Vietnamese", null);
         HttpHeaders headers = new HttpHeaders();
@@ -354,7 +355,8 @@ public class LanguageIntegrationTest {
 
     @Test
     @DirtiesContext
-    public void shouldRejectNotExistingIdOnUpdate() {
+    @Override
+    public void shouldRejectNonExistingIdOnUpdate() {
         LanguageDto languageDto = new LanguageDto(99, "Vietnamese", null);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -372,6 +374,7 @@ public class LanguageIntegrationTest {
 
     @Test
     @DirtiesContext
+    @Override
     public void shouldDeleteLanguage() {
         ResponseEntity<Void> response = restTemplate.exchange("/languages/2", HttpMethod.DELETE, null, Void.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
@@ -387,6 +390,7 @@ public class LanguageIntegrationTest {
     }
 
     @Test
+    @Override
     public void shouldRejectNonExistingIdOnDelete() {
         ResponseEntity<ProblemDetail> response = restTemplate.exchange("/languages/99", HttpMethod.DELETE, null, ProblemDetail.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -399,7 +403,8 @@ public class LanguageIntegrationTest {
     }
 
     @Test
-    public void shouldRejectDeletingLanguageWithExistingForeignKey() {
+    @Override
+    public void shouldRejectLanguageWithExistingForeignKeyOnDelete() {
         ResponseEntity<ProblemDetail> response = restTemplate.exchange("/languages/1", HttpMethod.DELETE, null, ProblemDetail.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
