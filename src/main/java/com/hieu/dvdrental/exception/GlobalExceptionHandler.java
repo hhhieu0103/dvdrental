@@ -4,10 +4,11 @@ import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.*;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.net.URI;
@@ -54,6 +55,58 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problemDetail.setTitle("Validation Failed");
         problemDetail.setDetail("One or more fields are invalid. Check the properties for more details");
         problemDetail.setProperties(fieldErrors);
+
+        return ResponseEntity.status(status).body(problemDetail);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHandlerMethodValidationException(HandlerMethodValidationException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        Map<String, Object> parameterErrors = new HashMap<>();
+
+        Map<String, Object> bodyErrors = new HashMap<>();
+        Map<String, Object> pathVariableErrors = new HashMap<>();
+        Map<String, Object> requestParamErrors = new HashMap<>();
+
+        ex.getParameterValidationResults().forEach(result -> {
+
+            var parameter = result.getMethodParameter();
+            boolean isBody = parameter.hasParameterAnnotation(RequestBody.class);
+            boolean isPathVariable = parameter.hasParameterAnnotation(PathVariable.class);
+
+            result.getResolvableErrors().forEach(err -> {
+                if (isBody) {
+
+                    String fieldName;
+                    if (err instanceof FieldError fieldError) {
+                        fieldName = fieldError.getField();
+                    } else {
+                        fieldName = parameter.getParameterName();
+                    }
+
+                    bodyErrors.put(fieldName, err.getDefaultMessage());
+
+                } else if (isPathVariable) {
+                    pathVariableErrors.put(result.getMethodParameter().getParameterName(), err.getDefaultMessage());
+                } else {
+                    requestParamErrors.put(result.getMethodParameter().getParameterName(), err.getDefaultMessage());
+                }
+            });
+        });
+
+        ProblemDetail problemDetail = ex.getBody();
+        problemDetail.setTitle("Validation Failed");
+        problemDetail.setDetail("One or more fields are invalid. Check the properties for more details");
+
+        if (!bodyErrors.isEmpty()) {
+            parameterErrors.put("body", bodyErrors);
+        }
+        if (!pathVariableErrors.isEmpty()) {
+            parameterErrors.put("pathVariable", pathVariableErrors);
+        }
+        if (!requestParamErrors.isEmpty()) {
+            parameterErrors.put("requestParam", requestParamErrors);
+        }
+        problemDetail.setProperties(parameterErrors);
 
         return ResponseEntity.status(status).body(problemDetail);
     }
