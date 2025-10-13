@@ -1,6 +1,7 @@
 package com.hieu.dvdrental.language;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,16 +32,23 @@ public class LanguageController {
     }
 
     @GetMapping("/languages/{id}")
-    public ResponseEntity<LanguageDto> getLanguageById(@PathVariable Integer id) {
+    public ResponseEntity<LanguageDto> getLanguageById(
+            @PathVariable
+            @Positive(message = "Invalid ID")
+            @Max(value = Integer.MAX_VALUE - 1, message = "Invalid ID")
+            Integer id
+    ) {
         return ResponseEntity.ok(languageService.getLanguageById(id));
     }
 
     @GetMapping(value = "/languages", params = "name")
     public ResponseEntity<Page<LanguageDto>> getLanguagesByName(
-            @RequestParam String name,
+            @RequestParam
+            @NotBlank(message = "Language name must not be blank")
+            @Size(max = 20, message = "Language name must has less than 20 characters") String name,
             @PageableDefault(sort = "name", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        return ResponseEntity.ok(languageService.getLanguagesByName(name, pageable));
+        return ResponseEntity.ok(languageService.getLanguagesByName(name.trim(), pageable));
     }
 
     @PostMapping("/languages")
@@ -58,7 +66,9 @@ public class LanguageController {
 
     @PatchMapping("/languages/{languageId}")
     public ResponseEntity<Void> updateLanguage(
-            @PathVariable Integer languageId,
+            @PathVariable
+            @Positive(message = "Invalid ID")
+            @Max(value = Integer.MAX_VALUE - 1, message = "Invalid ID") Integer languageId,
             @Valid @RequestBody LanguageDto languageDto
     ) {
         if (languageDto.getId() != null && !Objects.equals(languageId, languageDto.getId())) {
@@ -70,7 +80,10 @@ public class LanguageController {
     }
 
     @DeleteMapping("/languages/{languageId}")
-    public ResponseEntity<Void> deleteLanguage(@PathVariable Integer languageId) {
+    public ResponseEntity<Void> deleteLanguage(
+            @PathVariable
+            @Positive(message = "Invalid ID")
+            @Max(value = Integer.MAX_VALUE - 1, message = "Invalid ID") Integer languageId) {
         languageService.deleteLanguage(languageId);
         return ResponseEntity.noContent().build();
     }
