@@ -1,0 +1,40 @@
+ALTER TABLE address
+    ALTER COLUMN city_id TYPE INTEGER;
+
+ALTER TABLE city
+    ALTER COLUMN country_id TYPE INTEGER;
+
+ALTER TABLE customer
+    ALTER COLUMN store_id TYPE INTEGER,
+    ALTER COLUMN address_id TYPE INTEGER;
+
+ALTER TABLE film
+    ALTER COLUMN language_id TYPE INTEGER;
+
+ALTER TABLE film_actor
+    ALTER COLUMN actor_id TYPE INTEGER,
+    ALTER COLUMN film_id TYPE INTEGER;
+
+ALTER TABLE film_category
+    ALTER COLUMN film_id TYPE INTEGER,
+    ALTER COLUMN category_id TYPE INTEGER;
+
+ALTER TABLE inventory
+    ALTER COLUMN film_id TYPE INTEGER,
+    ALTER COLUMN store_id TYPE INTEGER;
+
+ALTER TABLE payment
+    ALTER COLUMN customer_id TYPE INTEGER,
+    ALTER COLUMN staff_id TYPE INTEGER;
+
+ALTER TABLE rental
+    ALTER COLUMN customer_id TYPE INTEGER,
+    ALTER COLUMN staff_id TYPE INTEGER;
+
+ALTER TABLE staff
+    ALTER COLUMN store_id TYPE INTEGER,
+    ALTER COLUMN address_id TYPE INTEGER;
+
+ALTER TABLE store
+    ALTER COLUMN address_id TYPE INTEGER,
+    ALTER COLUMN manager_staff_id TYPE INTEGER;

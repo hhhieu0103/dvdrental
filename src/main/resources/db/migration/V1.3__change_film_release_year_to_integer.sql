@@ -1,4 +1,0 @@
-ALTER TABLE film
-    ALTER COLUMN release_year TYPE INTEGER;
-
-DROP DOMAIN year;

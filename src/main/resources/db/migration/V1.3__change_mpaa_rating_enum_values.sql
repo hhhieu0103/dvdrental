@@ -1,0 +1,2 @@
+ALTER TYPE mpaa_rating RENAME VALUE 'PG-13' TO 'PG_13';
+ALTER TYPE mpaa_rating RENAME VALUE 'NC-17' TO 'NC_17';
