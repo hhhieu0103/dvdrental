@@ -1,5 +1,6 @@
 package com.hieu.dvdrental.entity;
 
+import com.hieu.dvdrental.country.Country;
 import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
 
