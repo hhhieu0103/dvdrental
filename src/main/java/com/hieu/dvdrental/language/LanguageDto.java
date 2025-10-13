@@ -12,12 +12,6 @@ public class LanguageDto {
     private String name;
     private Instant lastUpdate;
 
-    public LanguageDto(Language language) {
-        this.id = language.getId();
-        this.name = language.getName();
-        this.lastUpdate = language.getLastUpdate();
-    }
-
     public LanguageDto(Integer id, String name, Instant lastUpdate) {
         this.id = id;
         this.name = name;
