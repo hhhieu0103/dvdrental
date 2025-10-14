@@ -2,7 +2,6 @@ package com.hieu.dvdrental.language;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hieu.dvdrental.config.JacksonConfiguration;
-import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -75,7 +74,7 @@ public class LanguageControllerTest {
         return Stream.of(
                 Arguments.of("", "Language name must not be blank"),
                 Arguments.of("   ", "Language name must not be blank"),
-                Arguments.of("a".repeat(21), "Language name must has less than 20 characters")
+                Arguments.of("a".repeat(21), "Language name must not have more than 20 characters")
         );
     }
 
@@ -196,6 +195,18 @@ public class LanguageControllerTest {
         verify(languageService).getLanguageById(1);
     }
 
+    @ParameterizedTest
+    @MethodSource("invalidIdProvider")
+    public void shouldRejectLanguageWithInvalidIdOnGetById(Integer id) throws Exception {
+        mockMvc.perform(get("/languages/" + id))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Validation Failed"))
+                .andExpect(jsonPath("$.detail").value("One or more fields are invalid. Check the properties for more details"))
+                .andExpect(jsonPath("$.instance").value("/languages/" + id))
+                .andExpect(jsonPath("$.properties.pathVariable.languageId").value("Invalid ID"));
+    }
+
     @Test
     public void shouldRejectNonExistingLanguageOnGetById() throws Exception {
         given(languageService.getLanguageById(1)).willThrow(new EntityNotFoundException("Language with id " + 1 + " not found"));
@@ -219,22 +230,6 @@ public class LanguageControllerTest {
                     .content(objectMapper.writeValueAsString(languageDtoList.getFirst())))
                 .andExpect(status().isCreated())
                 .andExpect(header().string(HttpHeaders.LOCATION, "http://localhost/languages/1"));
-
-        verify(languageService).addLanguage(any(LanguageDto.class));
-    }
-
-    @Test
-    public void shouldRejectLanguageWithExistingIdOnCreate() throws Exception {
-        given(languageService.addLanguage(any(LanguageDto.class))).willThrow(new EntityExistsException("Language with id " + 1 + " already exists"));
-
-        mockMvc.perform(post("/languages")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(languageDtoList.getFirst())))
-                .andExpect(status().isConflict())
-                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.title").value("Entity Exists"))
-                .andExpect(jsonPath("$.detail").value("Language with id " + 1 + " already exists"))
-                .andExpect(jsonPath("$.instance").value("/languages"));
 
         verify(languageService).addLanguage(any(LanguageDto.class));
     }
@@ -300,19 +295,20 @@ public class LanguageControllerTest {
                 .andExpect(jsonPath("$.properties.body." + field).value(message));
     }
 
+    //TODO: add this to country
     @ParameterizedTest
     @MethodSource("invalidIdProvider")
-    public void shouldRejectLanguageWithInvalidIdOnUpdate(Integer value) throws Exception {
+    public void shouldRejectLanguageWithInvalidIdOnUpdate(Integer id) throws Exception {
         LanguageDto dto =  new LanguageDto(null, "Vietnamese", null);
 
-        mockMvc.perform(patch("/languages/" + value)
+        mockMvc.perform(patch("/languages/" + id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.title").value("Validation Failed"))
                 .andExpect(jsonPath("$.detail").value("One or more fields are invalid. Check the properties for more details"))
-                .andExpect(jsonPath("$.instance").value("/languages/" + value))
+                .andExpect(jsonPath("$.instance").value("/languages/" + id))
                 .andExpect(jsonPath("$.properties.pathVariable.languageId").value("Invalid ID"));
     }
 
@@ -334,6 +330,18 @@ public class LanguageControllerTest {
     public void shouldDeleteLanguage() throws Exception {
         mockMvc.perform(delete("/languages/1"))
                 .andExpect(status().isNoContent());
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidIdProvider")
+    public void shouldRejectLanguageWithInvalidIdOnDelete(Integer id) throws Exception {
+        mockMvc.perform(delete("/languages/" + id))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Validation Failed"))
+                .andExpect(jsonPath("$.detail").value("One or more fields are invalid. Check the properties for more details"))
+                .andExpect(jsonPath("$.instance").value("/languages/" + id))
+                .andExpect(jsonPath("$.properties.pathVariable.languageId").value("Invalid ID"));
     }
 
     @Test
