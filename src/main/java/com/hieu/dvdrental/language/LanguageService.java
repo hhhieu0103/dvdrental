@@ -38,9 +38,7 @@ public class LanguageService {
     }
 
     public Integer addLanguage(LanguageDto languageDto) {
-        if (languageDto.getId() != null && languageRepository.existsById(languageDto.getId())) {
-            throw new EntityExistsException("Language with id " + languageDto.getId() + " already exists");
-        }
+        languageDto.setId(null);
         Language language = languageMapper.toEntity(languageDto);
         Language createdLanguage = languageRepository.save(language);
         return createdLanguage.getId();
