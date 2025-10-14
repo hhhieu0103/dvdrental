@@ -31,21 +31,21 @@ public class LanguageController {
         return ResponseEntity.ok(languageService.getAllLanguages(pageable));
     }
 
-    @GetMapping("/languages/{id}")
+    @GetMapping("/languages/{languageId}")
     public ResponseEntity<LanguageDto> getLanguageById(
             @PathVariable
             @Positive(message = "Invalid ID")
             @Max(value = Integer.MAX_VALUE - 1, message = "Invalid ID")
-            Integer id
+            Integer languageId
     ) {
-        return ResponseEntity.ok(languageService.getLanguageById(id));
+        return ResponseEntity.ok(languageService.getLanguageById(languageId));
     }
 
     @GetMapping(value = "/languages", params = "name")
     public ResponseEntity<Page<LanguageDto>> getLanguagesByName(
             @RequestParam
             @NotBlank(message = "Language name must not be blank")
-            @Size(max = 20, message = "Language name must has less than 20 characters") String name,
+            @Size(max = 20, message = "Language name must not have more than 20 characters") String name,
             @PageableDefault(sort = "name", direction = Sort.Direction.ASC) Pageable pageable
     ) {
         return ResponseEntity.ok(languageService.getLanguagesByName(name.trim(), pageable));
