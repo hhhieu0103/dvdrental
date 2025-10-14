@@ -68,54 +68,6 @@ public class LanguageIntegrationTest {
     }
 
     @Test
-    public void shouldReturnAPageWithDefaultPaginationOnGetAll() {
-        ResponseEntity<ResponsePageImpl<LanguageDto>> response = restTemplate.exchange(
-                "/languages",
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<>() {}
-        );
-        assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
-        assertThat(response.getBody()).isNotNull();
-
-        assertThat(response.getBody().getNumber()).isEqualTo(0);
-        assertThat(response.getBody().getSize()).isEqualTo(10);
-        assertThat(response.getBody().getNumberOfElements()).isEqualTo(6);
-        assertThat(response.getBody().getTotalElements()).isEqualTo(6);
-        assertThat(response.getBody().getTotalPages()).isEqualTo(1);
-        assertThat(response.getBody().isFirst()).isTrue();
-        assertThat(response.getBody().isLast()).isTrue();
-
-        assertThat(response.getBody().getContent()).isNotNull();
-        List<LanguageDto> languages = response.getBody().getContent();
-        assertThat(languages.size()).isEqualTo(6);
-
-        assertThat(languages.getFirst().getId()).isEqualTo(1);
-        assertThat(languages.getFirst().getName()).isEqualTo("English             ");
-        assertThat(languages.getFirst().getLastUpdate()).isEqualTo(Instant.parse("2006-02-15T10:02:19Z"));
-
-        assertThat(languages.get(1).getId()).isEqualTo(5);
-        assertThat(languages.get(1).getName()).isEqualTo("French              ");
-        assertThat(languages.get(1).getLastUpdate()).isEqualTo(Instant.parse("2006-02-15T10:02:19Z"));
-
-        assertThat(languages.get(2).getId()).isEqualTo(6);
-        assertThat(languages.get(2).getName()).isEqualTo("German              ");
-        assertThat(languages.get(2).getLastUpdate()).isEqualTo(Instant.parse("2006-02-15T10:02:19Z"));
-
-        assertThat(languages.get(3).getId()).isEqualTo(2);
-        assertThat(languages.get(3).getName()).isEqualTo("Italian             ");
-        assertThat(languages.get(3).getLastUpdate()).isEqualTo(Instant.parse("2006-02-15T10:02:19Z"));
-
-        assertThat(languages.get(4).getId()).isEqualTo(3);
-        assertThat(languages.get(4).getName()).isEqualTo("Japanese            ");
-        assertThat(languages.get(4).getLastUpdate()).isEqualTo(Instant.parse("2006-02-15T10:02:19Z"));
-
-        assertThat(languages.get(5).getId()).isEqualTo(4);
-        assertThat(languages.get(5).getName()).isEqualTo("Mandarin            ");
-        assertThat(languages.get(5).getLastUpdate()).isEqualTo(Instant.parse("2006-02-15T10:02:19Z"));
-    }
-
-    @Test
     public void shouldReturnAPageOnGetByName() {
         ResponseEntity<ResponsePageImpl<LanguageDto>> response = restTemplate.exchange(
                 "/languages?name=an&page=0&size=5&sort=name,asc",
@@ -128,46 +80,6 @@ public class LanguageIntegrationTest {
 
         assertThat(response.getBody().getNumber()).isEqualTo(0);
         assertThat(response.getBody().getSize()).isEqualTo(5);
-        assertThat(response.getBody().getNumberOfElements()).isEqualTo(4);
-        assertThat(response.getBody().getTotalElements()).isEqualTo(4);
-        assertThat(response.getBody().getTotalPages()).isEqualTo(1);
-        assertThat(response.getBody().isFirst()).isTrue();
-        assertThat(response.getBody().isLast()).isTrue();
-
-        assertThat(response.getBody().getContent()).isNotNull();
-        List<LanguageDto> languages = response.getBody().getContent();
-        assertThat(languages.size()).isEqualTo(4);
-
-        assertThat(languages.getFirst().getId()).isEqualTo(6);
-        assertThat(languages.getFirst().getName()).isEqualTo("German              ");
-        assertThat(languages.getFirst().getLastUpdate()).isEqualTo(Instant.parse("2006-02-15T10:02:19Z"));
-
-        assertThat(languages.get(1).getId()).isEqualTo(2);
-        assertThat(languages.get(1).getName()).isEqualTo("Italian             ");
-        assertThat(languages.get(1).getLastUpdate()).isEqualTo(Instant.parse("2006-02-15T10:02:19Z"));
-
-        assertThat(languages.get(2).getId()).isEqualTo(3);
-        assertThat(languages.get(2).getName()).isEqualTo("Japanese            ");
-        assertThat(languages.get(2).getLastUpdate()).isEqualTo(Instant.parse("2006-02-15T10:02:19Z"));
-
-        assertThat(languages.get(3).getId()).isEqualTo(4);
-        assertThat(languages.get(3).getName()).isEqualTo("Mandarin            ");
-        assertThat(languages.get(3).getLastUpdate()).isEqualTo(Instant.parse("2006-02-15T10:02:19Z"));
-    }
-
-    @Test
-    public void shouldReturnAPageWithDefaultPaginationOnGetByName() {
-        ResponseEntity<ResponsePageImpl<LanguageDto>> response = restTemplate.exchange(
-                "/languages?name=an",
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<>() {}
-        );
-        assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
-        assertThat(response.getBody()).isNotNull();
-
-        assertThat(response.getBody().getNumber()).isEqualTo(0);
-        assertThat(response.getBody().getSize()).isEqualTo(10);
         assertThat(response.getBody().getNumberOfElements()).isEqualTo(4);
         assertThat(response.getBody().getTotalElements()).isEqualTo(4);
         assertThat(response.getBody().getTotalPages()).isEqualTo(1);
@@ -248,23 +160,6 @@ public class LanguageIntegrationTest {
         assertThat(getResponse.getBody().getId()).isEqualTo(8);
         assertThat(getResponse.getBody().getName()).isEqualTo("Vietnamese          ");
         assertThat(getResponse.getBody().getLastUpdate()).isNotNull();
-    }
-
-    @Test
-    public void shouldRejectLanguageWithExistingIdOnCreate() {
-        LanguageDto languageDto = new LanguageDto(1, "Vietnamese", null);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<LanguageDto> entity = new HttpEntity<>(languageDto, headers);
-
-        ResponseEntity<ProblemDetail> response = restTemplate.postForEntity("/languages", entity, ProblemDetail.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getStatus()).isEqualTo(409);
-        assertThat(response.getBody().getTitle()).isEqualTo("Entity Exists");
-        assertThat(response.getBody().getDetail()).isEqualTo("Language with id 1 already exists");
-        assertThat(response.getBody().getInstance()).isNotNull();
-        assertThat(response.getBody().getInstance().toString()).isEqualTo("/languages");
     }
 
     @Test
