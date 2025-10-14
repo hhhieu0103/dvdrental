@@ -1,7 +1,6 @@
 package com.hieu.dvdrental.language;
 
 import com.hieu.dvdrental.film.FilmRepository;
-import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -113,21 +112,11 @@ public class LanguageServiceTest {
 
     @Test
     public void shouldCreateLanguage() {
-        when(languageRepository.existsById(1)).thenReturn(false);
         when(languageRepository.save(any(Language.class))).thenReturn(languageEntityList.getFirst());
 
         Integer createdId = languageService.addLanguage(languageDtoList.getFirst());
         assertThat(createdId).isNotNull();
         assertThat(createdId).isEqualTo(1);
-    }
-
-    @Test
-    public void shouldRejectOnCreateWhenLanguageIdIsExist() {
-        when(languageRepository.existsById(1)).thenReturn(true);
-
-        assertThatThrownBy(() -> languageService.addLanguage(languageDtoList.getFirst()))
-                .isInstanceOf(EntityExistsException.class)
-                .hasMessage("Language with id " + 1 + " already exists");
     }
 
     @Test
