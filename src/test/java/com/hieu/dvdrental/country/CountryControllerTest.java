@@ -40,9 +40,9 @@ public class CountryControllerTest {
     private final Pageable pageable = PageRequest.of(0, 5, Sort.by("lastUpdate").descending());
     private final Pageable defaultPageable = PageRequest.of(0, 10, Sort.by("name").ascending());
 
-    private final Instant updated = Instant.now();
+    public static final Instant updated = Instant.now();
 
-    private final List<CountryDto> countryDtoList = List.of(
+    public static final List<CountryDto> countryDtoList = List.of(
             new CountryDto(1, "Vietnam", updated),
             new CountryDto(2, "Laos", updated),
             new CountryDto(3, "Cambodia", updated),
