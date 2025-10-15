@@ -119,26 +119,6 @@ public class LanguageControllerTest {
         given(languageService.getLanguagesByName("an", pageable)).willReturn(dtoPage);
 
         mockMvc.perform(get("/languages")
-                        .param("name", "an")
-                        .param("page", "0")
-                        .param("size", "5")
-                        .param("sort", "lastUpdate,desc"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(content().json(expectedJson))
-                .andExpect(jsonPath("$.size").value(dtoPage.getSize()))
-                .andExpect(jsonPath("$.totalElements").value(dtoPage.getTotalElements()))
-                .andExpect(jsonPath("$.number").value(dtoPage.getNumber()));
-
-        verify(languageService).getLanguagesByName("an", pageable);
-    }
-
-    @Test
-    public void shouldTrimSearchNameOnGetByName() throws Exception {
-        String expectedJson = objectMapper.writeValueAsString(Map.of("content", languageDtoList));
-        given(languageService.getLanguagesByName("an", pageable)).willReturn(dtoPage);
-
-        mockMvc.perform(get("/languages")
                         .param("name", "   an   ")
                         .param("page", "0")
                         .param("size", "5")
@@ -158,7 +138,7 @@ public class LanguageControllerTest {
         String expectedJson = objectMapper.writeValueAsString(Map.of("content", languageDtoList));
         given(languageService.getLanguagesByName("an", defaultPageable)).willReturn(dtoPageDefault);
 
-        mockMvc.perform(get("/languages").param("name", "an"))
+        mockMvc.perform(get("/languages").param("name", "  an  "))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(expectedJson))
