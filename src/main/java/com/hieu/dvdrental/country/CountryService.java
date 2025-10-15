@@ -1,7 +1,6 @@
 package com.hieu.dvdrental.country;
 
 import com.hieu.dvdrental.city.CityRepository;
-import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -36,13 +35,7 @@ public class CountryService {
     }
 
     public Integer addCountry(CountryDto countryDto) {
-        if (countryDto.getId() != null) {
-            if (countryRepository.existsById(countryDto.getId())) {
-                throw new EntityExistsException("Country with id " + countryDto.getId() + " already exists");
-            } else {
-                countryDto.setId(null);
-            }
-        }
+        countryDto.setId(null);
         return countryRepository.save(countryMapper.toEntity(countryDto)).getId();
     }
 
