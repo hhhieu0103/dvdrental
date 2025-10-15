@@ -1,5 +1,6 @@
 package com.hieu.dvdrental.entity;
 
+import com.hieu.dvdrental.address.Address;
 import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
