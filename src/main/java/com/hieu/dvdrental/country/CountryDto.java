@@ -1,11 +1,14 @@
 package com.hieu.dvdrental.country;
 
+import com.hieu.dvdrental.validation.OnReference;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 
 public class CountryDto {
+    @NotNull(message = "Country ID must not be null", groups = {OnReference.class})
     private Integer id;
     @NotBlank(message = "Country name must not be blank")
     @Size(max = 50, message = "Country name must have less than 50 characters")
@@ -19,6 +22,10 @@ public class CountryDto {
     }
 
     public CountryDto() {}
+
+    public CountryDto(Integer id) {
+        this.id = id;
+    }
 
     public Integer getId() {
         return id;
