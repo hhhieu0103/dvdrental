@@ -1,6 +1,10 @@
 package com.hieu.dvdrental.country;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,17 +33,23 @@ public class CountryController {
         return ResponseEntity.ok(countryService.getAllCountries(pageable));
     }
 
-    @GetMapping("/countries/{id}")
-    public ResponseEntity<CountryDto> getCountryById(@PathVariable Integer id) {
-        return ResponseEntity.ok(countryService.getCountryById(id));
+    @GetMapping("/countries/{countryId}")
+    public ResponseEntity<CountryDto> getCountryById(
+            @PathVariable
+            @Positive(message = "Invalid ID")
+            @Max(value = Integer.MAX_VALUE - 1, message = "Invalid ID") Integer countryId
+    ) {
+        return ResponseEntity.ok(countryService.getCountryById(countryId));
     }
 
     @GetMapping(value = "/countries", params = "name")
     public ResponseEntity<Page<CountryDto>> getCountriesByName(
-            @RequestParam String name,
+            @RequestParam
+            @NotBlank(message = "Country name must not be blank")
+            @Size(max = 50, message = "Country name must not have more than 50 characters") String name,
             @PageableDefault(sort = "name", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        return ResponseEntity.ok(countryService.getCountriesByName(name, pageable));
+        return ResponseEntity.ok(countryService.getCountriesByName(name.trim(), pageable));
     }
 
     @PostMapping("/countries")
@@ -57,7 +67,9 @@ public class CountryController {
 
     @PatchMapping("/countries/{countryId}")
     public ResponseEntity<Void> updateCountry(
-            @PathVariable Integer countryId,
+            @PathVariable
+            @Positive(message = "Invalid ID")
+            @Max(value = Integer.MAX_VALUE - 1, message = "Invalid ID") Integer countryId,
             @Valid @RequestBody CountryDto countryDto
     ) {
         if (countryDto.getId() != null && !Objects.equals(countryId, countryDto.getId())) {
@@ -69,8 +81,12 @@ public class CountryController {
     }
 
     @DeleteMapping("/countries/{countryId}")
-    public ResponseEntity<Void> deleteCountry(@PathVariable Integer countryId) {
+    public ResponseEntity<Void> deleteCountry(
+            @PathVariable
+            @Positive(message = "Invalid ID")
+            @Max(value = Integer.MAX_VALUE - 1, message = "Invalid ID") Integer countryId) {
         countryService.deleteCountry(countryId);
         return ResponseEntity.noContent().build();
     }
+
 }
