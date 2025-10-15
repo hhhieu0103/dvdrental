@@ -71,6 +71,8 @@ public class LanguageServiceTest {
         assertThat(languagePage.getContent())
                 .usingRecursiveComparison()
                 .isEqualTo(languageDtoList);
+
+        verify(languageRepository).findAll(pageable);
     }
 
     @Test
@@ -84,6 +86,8 @@ public class LanguageServiceTest {
         assertThat(languageDto.getId()).isEqualTo(1);
         assertThat(languageDto.getName()).isEqualTo("English");
         assertThat(languageDto.getLastUpdate()).isEqualTo(updated);
+
+        verify(languageRepository).findById(1);
     }
 
     @Test
@@ -93,6 +97,8 @@ public class LanguageServiceTest {
         assertThatThrownBy(() -> languageService.getLanguageById(1))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Language with id " + 1 + " not found");
+
+        verify(languageRepository).findById(1);
     }
 
     @Test
@@ -108,6 +114,8 @@ public class LanguageServiceTest {
         assertThat(languagePage.getContent())
                 .usingRecursiveComparison()
                 .isEqualTo(languageDtoList);
+
+        verify(languageRepository).findByNameContainingIgnoreCase("name", pageable);
     }
 
     @Test
@@ -117,6 +125,8 @@ public class LanguageServiceTest {
         Integer createdId = languageService.addLanguage(languageDtoList.getFirst());
         assertThat(createdId).isNotNull();
         assertThat(createdId).isEqualTo(1);
+
+        verify(languageRepository).save(any(Language.class));
     }
 
     @Test
@@ -125,6 +135,7 @@ public class LanguageServiceTest {
 
         languageService.updateLanguage(languageDtoList.getFirst());
 
+        verify(languageRepository).existsById(1);
         verify(languageRepository).save(argThat(entity -> entity.getId() == 1 && entity.getName().equals("English")));
     }
 
@@ -135,6 +146,8 @@ public class LanguageServiceTest {
         assertThatThrownBy(() -> languageService.updateLanguage(languageDtoList.getFirst()))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Language with id " + 1 + " not found");
+
+        verify(languageRepository).existsById(1);
     }
 
     @Test
@@ -144,6 +157,8 @@ public class LanguageServiceTest {
 
         languageService.deleteLanguage(1);
 
+        verify(languageRepository).existsById(1);
+        verify(filmRepository).existsFilmByLanguageId(1);
         verify(languageRepository).deleteById(1);
     }
 
@@ -154,6 +169,8 @@ public class LanguageServiceTest {
         assertThatThrownBy(() -> languageService.deleteLanguage(1))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Language with id " + 1 + " not found");
+
+        verify(languageRepository).existsById(1);
     }
 
     @Test
@@ -164,5 +181,8 @@ public class LanguageServiceTest {
         assertThatThrownBy(() -> languageService.deleteLanguage(1))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("One or more films are associated with the language with id 1");
+
+        verify(languageRepository).existsById(1);
+        verify(filmRepository).existsFilmByLanguageId(1);
     }
 }
