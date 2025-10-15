@@ -34,8 +34,8 @@ public class CountryServiceTest {
 
     private final Pageable pageable = PageRequest.of(0, 5, Sort.by("name").ascending());
 
-    private final Instant updated = Instant.now();
-    private final List<Country> countryEntityList = List.of(
+    public static final Instant updated = Instant.now();
+    public static final List<Country> countryEntityList = List.of(
             new Country(1, "France", updated),
             new Country(2, "Russian Federation", updated),
             new Country(3, "New Zealand", updated),
@@ -43,7 +43,7 @@ public class CountryServiceTest {
             new Country(5, "Iran", updated)
     );
 
-    private final List<CountryDto> countryDtoList = List.of(
+    public static final List<CountryDto> countryDtoList = List.of(
             new CountryDto(1, "France", updated),
             new CountryDto(2, "Russian Federation", updated),
             new CountryDto(3, "New Zealand", updated),
@@ -71,6 +71,8 @@ public class CountryServiceTest {
         assertThat(countryPage.getContent())
                 .usingRecursiveComparison()
                 .isEqualTo(countryDtoList);
+
+        verify(countryRepository).findAll(pageable);
     }
 
     @Test
@@ -84,6 +86,8 @@ public class CountryServiceTest {
         assertThat(countryDto.getId()).isEqualTo(1);
         assertThat(countryDto.getName()).isEqualTo("France");
         assertThat(countryDto.getLastUpdate()).isEqualTo(updated);
+
+        verify(countryRepository).findById(1);
     }
 
     @Test
@@ -93,6 +97,8 @@ public class CountryServiceTest {
         assertThatThrownBy(() -> countryService.getCountryById(1))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Country with id " + 1 + " not found");
+
+        verify(countryRepository).findById(1);
     }
 
     @Test
@@ -108,6 +114,8 @@ public class CountryServiceTest {
         assertThat(countryPage.getContent())
                 .usingRecursiveComparison()
                 .isEqualTo(countryDtoList);
+
+        verify(countryRepository).findByNameContainingIgnoreCase("name", pageable);
     }
 
     @Test
@@ -117,6 +125,8 @@ public class CountryServiceTest {
         Integer createdId = countryService.addCountry(countryDtoList.getFirst());
         assertThat(createdId).isNotNull();
         assertThat(createdId).isEqualTo(1);
+
+        verify(countryRepository).save(any(Country.class));
     }
 
     @Test
@@ -125,6 +135,7 @@ public class CountryServiceTest {
 
         countryService.updateCountry(countryDtoList.getFirst());
 
+        verify(countryRepository).existsById(1);
         verify(countryRepository).save(argThat(entity -> entity.getId() == 1 && entity.getName().equals("France")));
     }
 
@@ -135,6 +146,8 @@ public class CountryServiceTest {
         assertThatThrownBy(() -> countryService.updateCountry(countryDtoList.getFirst()))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Country with id " + 1 + " not found");
+
+        verify(countryRepository).existsById(1);
     }
 
     @Test
@@ -144,6 +157,8 @@ public class CountryServiceTest {
 
         countryService.deleteCountry(1);
 
+        verify(countryRepository).existsById(1);
+        verify(cityRepository).existsByCountryId(1);
         verify(countryRepository).deleteById(1);
     }
 
@@ -154,6 +169,8 @@ public class CountryServiceTest {
         assertThatThrownBy(() -> countryService.deleteCountry(1))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage("Country with id " + 1 + " not found");
+
+        verify(countryRepository).existsById(1);
     }
 
     @Test
@@ -164,5 +181,8 @@ public class CountryServiceTest {
         assertThatThrownBy(() -> countryService.deleteCountry(1))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("One or more cities are associated with the country with id 1");
+
+        verify(countryRepository).existsById(1);
+        verify(cityRepository).existsByCountryId(1);
     }
 }
