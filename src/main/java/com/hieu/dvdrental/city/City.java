@@ -1,4 +1,4 @@
-package com.hieu.dvdrental.entity;
+package com.hieu.dvdrental.city;
 
 import com.hieu.dvdrental.country.Country;
 import jakarta.persistence.*;
@@ -16,15 +16,24 @@ public class City {
     private Integer id;
 
     @Column(name = "city", nullable = false, length = 50)
-    private String city;
+    private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "country_id", nullable = false)
     private Country country;
 
     @ColumnDefault("now()")
     @Column(name = "last_update", nullable = false, insertable = false, updatable = false)
     private Instant lastUpdate;
+
+    public City() {}
+
+    public City(Integer id, String name, Country country, Instant lastUpdate) {
+        this.id = id;
+        this.name = name;
+        this.country = country;
+        this.lastUpdate = lastUpdate;
+    }
 
     public Integer getId() {
         return id;
@@ -34,12 +43,12 @@ public class City {
         this.id = id;
     }
 
-    public String getCity() {
-        return city;
+    public String getName() {
+        return name;
     }
 
-    public void setCity(String city) {
-        this.city = city;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Country getCountry() {
