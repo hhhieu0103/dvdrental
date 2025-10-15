@@ -1,7 +1,6 @@
 package com.hieu.dvdrental.country;
 
 import com.hieu.dvdrental.city.CityRepository;
-import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -113,21 +112,11 @@ public class CountryServiceTest {
 
     @Test
     public void shouldCreateCountry() {
-        when(countryRepository.existsById(1)).thenReturn(false);
         when(countryRepository.save(any(Country.class))).thenReturn(countryEntityList.getFirst());
 
         Integer createdId = countryService.addCountry(countryDtoList.getFirst());
         assertThat(createdId).isNotNull();
         assertThat(createdId).isEqualTo(1);
-    }
-
-    @Test
-    public void shouldRejectOnCreateWhenCountryIdIsExist() {
-        when(countryRepository.existsById(1)).thenReturn(true);
-
-        assertThatThrownBy(() -> countryService.addCountry(countryDtoList.getFirst()))
-                .isInstanceOf(EntityExistsException.class)
-                .hasMessage("Country with id " + 1 + " already exists");
     }
 
     @Test

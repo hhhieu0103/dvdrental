@@ -2,10 +2,10 @@ package com.hieu.dvdrental.country;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hieu.dvdrental.config.JacksonConfiguration;
-import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -26,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(controllers = CountryController.class)
 @Import(JacksonConfiguration.class)
-public class CountryControllerTest implements CountryTestSuit {
+public class CountryControllerTest {
     @Autowired
     MockMvc mockMvc;
 
@@ -52,8 +53,32 @@ public class CountryControllerTest implements CountryTestSuit {
     private final Page<CountryDto> dtoPage = new PageImpl<>(countryDtoList, pageable, countryDtoList.size());
     private final Page<CountryDto> dtoPageDefault = new PageImpl<>(countryDtoList, defaultPageable, countryDtoList.size());
 
+    static Stream<Arguments> invalidNameProvider() {
+        return Stream.of(
+                Arguments.of("name", null, "Country name must not be blank"),
+                Arguments.of("name", "", "Country name must not be blank"),
+                Arguments.of("name", "   ", "Country name must not be blank"),
+                Arguments.of("name", "a".repeat(51), "Country name must have less than 50 characters")
+        );
+    }
+
+    static Stream<Arguments> invalidIdProvider() {
+        return Stream.of(
+                Arguments.of(0),
+                Arguments.of(-1),
+                Arguments.of(Integer.MAX_VALUE)
+        );
+    }
+
+    static Stream<Arguments> invalidSearchNameProvider() {
+        return Stream.of(
+                Arguments.of("", "Country name must not be blank"),
+                Arguments.of("   ", "Country name must not be blank"),
+                Arguments.of("a".repeat(51), "Country name must not have more than 50 characters")
+        );
+    }
+
     @Test
-    @Override
     public void shouldReturnAPageOnGetAll() throws Exception {
         String expectedJson = objectMapper.writeValueAsString(Map.of("content", countryDtoList));
         given(countryService.getAllCountries(pageable)).willReturn(dtoPage);
@@ -72,7 +97,6 @@ public class CountryControllerTest implements CountryTestSuit {
         verify(countryService).getAllCountries(pageable);
     }
 
-    @Override
     @Test
     public void shouldReturnAPageWithDefaultPaginationOnGetAll() throws Exception {
         String expectedJson = objectMapper.writeValueAsString(Map.of("content", countryDtoList));
@@ -89,14 +113,13 @@ public class CountryControllerTest implements CountryTestSuit {
         verify(countryService).getAllCountries(defaultPageable);
     }
 
-    @Override
     @Test
     public void shouldReturnAPageOnGetByName() throws Exception {
         String expectedJson = objectMapper.writeValueAsString(Map.of("content", countryDtoList));
         given(countryService.getCountriesByName("an", pageable)).willReturn(dtoPage);
 
         mockMvc.perform(get("/countries")
-                        .param("name", "an")
+                        .param("name", "   an   ")
                         .param("page", "0")
                         .param("size", "5")
                         .param("sort", "lastUpdate,desc"))
@@ -110,13 +133,12 @@ public class CountryControllerTest implements CountryTestSuit {
         verify(countryService).getCountriesByName("an", pageable);
     }
 
-    @Override
     @Test
     public void shouldReturnAPageWithDefaultPaginationOnGetByName() throws Exception {
         String expectedJson = objectMapper.writeValueAsString(Map.of("content", countryDtoList));
         given(countryService.getCountriesByName("an", defaultPageable)).willReturn(dtoPageDefault);
 
-        mockMvc.perform(get("/countries").param("name", "an"))
+        mockMvc.perform(get("/countries").param("name", "   an    "))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(expectedJson))
@@ -127,7 +149,18 @@ public class CountryControllerTest implements CountryTestSuit {
         verify(countryService).getCountriesByName("an", defaultPageable);
     }
 
-    @Override
+    @ParameterizedTest
+    @MethodSource("invalidSearchNameProvider")
+    public void shouldRejectWhenSearchNameIsNotValidOnGetByName(String fieldValue, String message) throws Exception {
+        mockMvc.perform(get("/countries").param("name", fieldValue))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Validation Failed"))
+                .andExpect(jsonPath("$.detail").value("One or more fields are invalid. Check the properties for more details"))
+                .andExpect(jsonPath("$.instance").value("/countries"))
+                .andExpect(jsonPath("$.properties.requestParam.name").value(message));
+    }
+
     @Test
     public void shouldReturnCountryOnGetById() throws Exception {
         String expectedJson = objectMapper.writeValueAsString(countryDtoList.getFirst());
@@ -141,7 +174,18 @@ public class CountryControllerTest implements CountryTestSuit {
         verify(countryService).getCountryById(1);
     }
 
-    @Override
+    @ParameterizedTest
+    @MethodSource("invalidIdProvider")
+    public void shouldRejectCountryWithInvalidIdOnGetById(Integer id) throws Exception {
+        mockMvc.perform(get("/countries/" + id))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Validation Failed"))
+                .andExpect(jsonPath("$.detail").value("One or more fields are invalid. Check the properties for more details"))
+                .andExpect(jsonPath("$.instance").value("/countries/" + id))
+                .andExpect(jsonPath("$.properties.pathVariable.countryId").value("Invalid ID"));
+    }
+
     @Test
     public void shouldRejectNonExistingCountryOnGetById() throws Exception {
         given(countryService.getCountryById(1)).willThrow(new EntityNotFoundException("Country with id " + 1 + " not found"));
@@ -156,7 +200,6 @@ public class CountryControllerTest implements CountryTestSuit {
         verify(countryService).getCountryById(1);
     }
 
-    @Override
     @Test
     public void shouldCreateNewCountry() throws Exception {
         given(countryService.addCountry(any(CountryDto.class))).willReturn(1);
@@ -170,26 +213,8 @@ public class CountryControllerTest implements CountryTestSuit {
         verify(countryService).addCountry(any(CountryDto.class));
     }
 
-    @Override
-    @Test
-    public void shouldRejectCountryWithExistingIdOnCreate() throws Exception {
-        given(countryService.addCountry(any(CountryDto.class))).willThrow(new EntityExistsException("Country with id " + 1 + " already exists"));
-
-        mockMvc.perform(post("/countries")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(countryDtoList.getFirst())))
-                .andExpect(status().isConflict())
-                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.title").value("Entity Exists"))
-                .andExpect(jsonPath("$.detail").value("Country with id " + 1 + " already exists"))
-                .andExpect(jsonPath("$.instance").value("/countries"));
-
-        verify(countryService).addCountry(any(CountryDto.class));
-    }
-
     @ParameterizedTest
     @MethodSource("invalidNameProvider")
-    @Override
     public void shouldRejectCountryWithInvalidNameOnCreate(String field, String fieldValue, String message) throws Exception {
         CountryDto countryDto = new CountryDto(null, fieldValue, null);
         mockMvc.perform(post("/countries")
@@ -204,7 +229,6 @@ public class CountryControllerTest implements CountryTestSuit {
     }
 
     @Test
-    @Override
     public void shouldUpdateCountry() throws Exception {
         CountryDto dto =  new CountryDto(null, "New name", null);
 
@@ -217,7 +241,6 @@ public class CountryControllerTest implements CountryTestSuit {
     }
 
     @Test
-    @Override
     public void shouldRejectNonExistingIdOnUpdate() throws Exception {
         CountryDto dto =  new CountryDto(null, "New name", null);
         willThrow(new EntityNotFoundException("Country with id " + 1 + " not found"))
@@ -236,8 +259,23 @@ public class CountryControllerTest implements CountryTestSuit {
     }
 
     @ParameterizedTest
+    @MethodSource("invalidIdProvider")
+    public void shouldRejectCountryWithInvalidIdOnUpdate(Integer id) throws Exception {
+        CountryDto dto = new CountryDto(null, "Vietnam", null);
+
+        mockMvc.perform(patch("/countries/" + id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Validation Failed"))
+                .andExpect(jsonPath("$.detail").value("One or more fields are invalid. Check the properties for more details"))
+                .andExpect(jsonPath("$.instance").value("/countries/" + id))
+                .andExpect(jsonPath("$.properties.pathVariable.countryId").value("Invalid ID"));
+    }
+
+    @ParameterizedTest
     @MethodSource("invalidNameProvider")
-    @Override
     public void shouldRejectCountryWithInvalidNameOnUpdate(String field, String fieldValue, String message) throws Exception {
         CountryDto dto =  new CountryDto(null, fieldValue, null);
 
@@ -249,11 +287,10 @@ public class CountryControllerTest implements CountryTestSuit {
                 .andExpect(jsonPath("$.title").value("Validation Failed"))
                 .andExpect(jsonPath("$.detail").value("One or more fields are invalid. Check the properties for more details"))
                 .andExpect(jsonPath("$.instance").value("/countries/1"))
-                .andExpect(jsonPath("$.properties." + field).value(message));
+                .andExpect(jsonPath("$.properties.body." + field).value(message));
     }
 
     @Test
-    @Override
     public void shouldRejectDifferentIdsOnUpdate() throws Exception {
         CountryDto dto =  new CountryDto(2, "New name", null);
 
@@ -268,14 +305,24 @@ public class CountryControllerTest implements CountryTestSuit {
     }
 
     @Test
-    @Override
     public void shouldDeleteCountry() throws Exception {
         mockMvc.perform(delete("/countries/1"))
                 .andExpect(status().isNoContent());
     }
 
+    @ParameterizedTest
+    @MethodSource("invalidIdProvider")
+    public void shouldRejectCountryWithInvalidIdOnDelete(Integer id) throws Exception {
+        mockMvc.perform(delete("/countries/" + id))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Validation Failed"))
+                .andExpect(jsonPath("$.detail").value("One or more fields are invalid. Check the properties for more details"))
+                .andExpect(jsonPath("$.instance").value("/countries/" + id))
+                .andExpect(jsonPath("$.properties.pathVariable.countryId").value("Invalid ID"));
+    }
+
     @Test
-    @Override
     public void shouldRejectNonExistingIdOnDelete() throws Exception {
         willThrow(new EntityNotFoundException("Country with id " + 1 + " not found"))
                 .given(countryService).deleteCountry(1);
@@ -289,7 +336,6 @@ public class CountryControllerTest implements CountryTestSuit {
     }
 
     @Test
-    @Override
     public void shouldRejectCountryWithExistingForeignKeyOnDelete() throws Exception {
         willThrow(new IllegalArgumentException("One or more films are associated with the country with id 1"))
                 .given(countryService).deleteCountry(1);
